@@ -2,8 +2,7 @@
 - name: "Apache installation using docker"
   hosts: prod
   become: true
-  vars:
-   ansible_sudo_pass: admin
+
   pre_tasks:
     - name: Install EPEL repo
       package: name=epel-release state=present
@@ -17,6 +16,18 @@
     - name: Install docker python
       pip: name=docker-py
   tasks:
+    - name: install package with yum
+      yum:
+        name: '{{ item}}'
+        state: present
+      loop:
+        - git
+        - wget
+      when: ansible_os_family == "RedHat"
+    - name: Generate index.html from template
+      template:
+       src: templates/index.html.j2
+       dest: /home/admin/index.html
     - name: Create Apache container
       docker_container:
         name: webapp
@@ -24,3 +35,7 @@
         state: started
         ports:
           - "80:80"
+        volumes:
+        - /home/admin/index.html:/usr/local/apache2/htdocs/index.html
+
+
